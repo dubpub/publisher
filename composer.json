@@ -1,0 +1,20 @@
+{
+  "name": "vgtrk/publisher",
+  "description": "Publisher for assets/configs",
+  "authors": [
+    {
+      "name": "Andrey Volynov",
+      "email": "dubpubz@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Vgtrk\\Publisher\\": "./src/Vgtrk/Publisher"
+    }
+  },
+  "require": {
+    "symfony/console": "2.7.*"
+  },
+  "scripts": {
+  }
+}
