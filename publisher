@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+
+include  __DIR__. '/vendor/autoload.php';
+
+$application = new \Symfony\Component\Console\Application();
+$application->setName('Vgtrk: publisher');
+$application->setVersion('1.0');
+$application->add(new \Vgtrk\Publisher\Commands\PublishCommand());
+$application->run();
