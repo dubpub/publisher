@@ -1,5 +1,5 @@
 {
-  "name": "vgtrk/publisher",
+  "name": "dubpub/publisher",
   "description": "Publisher for assets/configs",
   "authors": [
     {
@@ -16,7 +16,5 @@
     "symfony/console": "2.7.*",
     "symfony/yaml": "2.7.*",
     "symfony/filesystem": "2.7.*"
-  },
-  "scripts": {
   }
 }
