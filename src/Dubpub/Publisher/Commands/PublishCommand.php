@@ -1,4 +1,4 @@
-<?php namespace Vgtrk\Publisher\Commands;
+<?php namespace Dubpub\Publisher\Commands;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -6,10 +6,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Vgtrk\Publisher\Contracts\IConfigGroup;
-use Vgtrk\Publisher\Contracts\IConfigReader;
-use Vgtrk\Publisher\Readers\PHP\PHPReader;
-use Vgtrk\Publisher\Readers\Yaml\YAMLReader;
+use Dubpub\Publisher\Contracts\IConfigGroup;
+use Dubpub\Publisher\Contracts\IConfigReader;
+use Dubpub\Publisher\Readers\PHP\PHPReader;
+use Dubpub\Publisher\Readers\Yaml\YAMLReader;
 
 class PublishCommand extends Command
 {

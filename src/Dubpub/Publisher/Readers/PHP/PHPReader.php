@@ -1,8 +1,8 @@
-<?php namespace Vgtrk\Publisher\Readers\PHP;
+<?php namespace Dubpub\Publisher\Readers\PHP;
 
-use Vgtrk\Publisher\Contracts\IConfigGroup;
-use Vgtrk\Publisher\Contracts\IConfigReader;
-use Vgtrk\Publisher\GroupTypes\Common;
+use Dubpub\Publisher\Contracts\IConfigGroup;
+use Dubpub\Publisher\Contracts\IConfigReader;
+use Dubpub\Publisher\GroupTypes\Common;
 
 class PHPReader implements IConfigReader
 {

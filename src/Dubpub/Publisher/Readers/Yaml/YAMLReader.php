@@ -1,9 +1,9 @@
-<?php namespace Vgtrk\Publisher\Readers\Yaml;
+<?php namespace Dubpub\Publisher\Readers\Yaml;
 
 use Symfony\Component\Yaml\Parser;
-use Vgtrk\Publisher\Contracts\IConfigGroup;
-use Vgtrk\Publisher\Contracts\IConfigReader;
-use Vgtrk\Publisher\GroupTypes\Common;
+use Dubpub\Publisher\Contracts\IConfigGroup;
+use Dubpub\Publisher\Contracts\IConfigReader;
+use Dubpub\Publisher\GroupTypes\Common;
 
 /**
  * Created by PhpStorm.

@@ -1,4 +1,4 @@
-<?php namespace Vgtrk\Publisher\Contracts;
+<?php namespace Dubpub\Publisher\Contracts;
 
 interface IConfigReader
 {

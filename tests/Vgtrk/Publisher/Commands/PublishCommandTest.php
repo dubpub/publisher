@@ -1,4 +1,4 @@
-<?php namespace Vgtrk\Publisher\Commands;
+<?php namespace Dubpub\Publisher\Commands;
 
 use PHPUnit_Framework_TestCase;
 use PHPUnit_Framework_MockObject_MockObject as Mock;

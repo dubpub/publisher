@@ -1,6 +1,6 @@
-<?php namespace Vgtrk\Publisher\GroupTypes;
+<?php namespace Dubpub\Publisher\GroupTypes;
 
-use Vgtrk\Publisher\Contracts\IConfigGroup;
+use Dubpub\Publisher\Contracts\IConfigGroup;
 
 class Common implements IConfigGroup
 {

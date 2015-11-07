@@ -9,7 +9,7 @@
   ],
   "autoload": {
     "psr-4": {
-      "Vgtrk\\Publisher\\": "./src/Vgtrk/Publisher"
+      "Dubpub\\Publisher\\": "./src/Dubpub/Publisher"
     }
   },
   "require": {
