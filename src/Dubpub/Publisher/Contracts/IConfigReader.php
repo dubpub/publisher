@@ -49,7 +49,9 @@ interface IConfigReader
     /**
      * Parses config file.
      *
-     * @return mixed
+     * @return mixed|$this
      */
     public function read();
+
+
 }

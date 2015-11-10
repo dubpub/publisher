@@ -1,33 +1,26 @@
-<?php namespace Dubpub\Publisher\Readers\Yaml;
+<?php namespace Dubpub\Publisher\Workers\PHP;
 
-use Symfony\Component\Yaml\Parser;
 use Dubpub\Publisher\Contracts\IConfigGroup;
 use Dubpub\Publisher\Contracts\IConfigReader;
 use Dubpub\Publisher\GroupTypes\Common;
 
-/**
- * Created by PhpStorm.
- * User: madman
- * Date: 01.11.15
- * Time: 22:36
- */
-class YAMLReader implements IConfigReader
+class PHPHandler implements IConfigReader
 {
-    /** @var  string */
+    /**
+     * @var array
+     */
+
+    private $config;
+    /**
+     * Config path.
+     *
+     * @var string config path
+     */
     protected $path;
     /**
-     * @var Parser
-     */
-    protected $yamlParser;
-    /**
-     * @var IConfigGroup[]|Common
+     * @var IConfigGroup[]|Common[]
      */
     protected $groups;
-
-    public function __construct()
-    {
-        $this->yamlParser = new Parser();
-    }
 
     public function groupExists($groupName)
     {
@@ -69,8 +62,6 @@ class YAMLReader implements IConfigReader
     }
 
     /**
-     * Return config path.
-     *
      * @return string
      */
     public function getPath()
@@ -79,8 +70,6 @@ class YAMLReader implements IConfigReader
     }
 
     /**
-     * Sets config path.
-     *
      * @param $path
      * @return $this
      */
@@ -93,15 +82,21 @@ class YAMLReader implements IConfigReader
     /**
      * Parses config file.
      *
-     * @return mixed
+     * @return $this
      */
     public function read()
     {
-        $readValue = $this->yamlParser->parse(file_get_contents($this->getPath()));
+        $this->config = include $this->getPath();
 
-        foreach ($readValue as $group => $paths) {
-            $this->groups[$group] = new Common();
-            $this->groups[$group]->setName($group)->setPaths($paths);
+        if (!is_array($this->config)) {
+            throw new \LogicException($this->getPath() . ' script must return array.');
+        }
+
+        foreach ($this->config as $pathGroupName => $pathGroup) {
+            $configGroup = new Common();
+            $configGroup->setName($pathGroupName);
+            $configGroup->setPaths($pathGroup);
+            $this->groups[$pathGroupName] = $configGroup;
         }
 
         return $this;
