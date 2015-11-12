@@ -1,10 +1,24 @@
 #!/usr/bin/env php
 <?php
 
+use Dubpub\Publisher\Handlers\JSONHandler;
+use Dubpub\Publisher\Handlers\PHPHandler;
+use Dubpub\Publisher\Handlers\YAMLHandler;
+use Symfony\Component\Yaml\Dumper;
+use Symfony\Component\Yaml\Parser;
+
 include  __DIR__. '/vendor/autoload.php';
 
+$scanner = new \Dubpub\Publisher\PublisherScanner();
+
+$scanner->registerTypeHandler('php', PHPHandler::class);
+$scanner->registerTypeHandler('json', JSONHandler::class);
+$scanner->registerTypeHandler('yaml', $yaml = new YAMLHandler(new Parser(), new Dumper()));
+$scanner->registerTypeHandler('yml', $yaml);
+
 $application = new \Symfony\Component\Console\Application();
-$application->setName('Vgtrk: publisher');
+$application->setName('Dubpub: publisher');
 $application->setVersion('1.0');
-$application->add(new \Vgtrk\Publisher\Commands\PublishCommand());
+$application->add(new \Dubpub\Publisher\Commands\PublishCommand('publish', $scanner));
+$application->add(new \Dubpub\Publisher\Commands\InitCommand('init', $scanner));
 $application->run();

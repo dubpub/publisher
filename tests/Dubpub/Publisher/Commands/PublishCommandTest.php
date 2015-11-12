@@ -1,213 +1,197 @@
-<?php namespace Dubpub\Publisher\Commands;
+<?php
+/**
+ * Created by PhpStorm.
+ * User: madman
+ * Date: 12.11.15
+ * Time: 1:02
+ */
 
-use PHPUnit_Framework_TestCase;
-use PHPUnit_Framework_MockObject_MockObject as Mock;
+namespace Dubpub\Publisher\Commands;
 
-use Symfony\Component\Console\Application;
+use Dubpub\Publisher\PublisherScanner;
+use Illuminate\Filesystem\Filesystem;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
-class PublishCommandTest extends PHPUnit_Framework_TestCase
+class PublishCommandTest extends \HelperTest
 {
     /**
-     * @var PublishCommand
-     */
-    protected $testInstance;
-
-    /**
-     * @var InputInterface|Mock
-     */
-    protected $input;
-
-    /**
-     * @var OutputInterface|Mock
-     */
-    protected $output;
-
-    private function delTree($dir) {
-        $files = array_diff(scandir($dir), array('.','..'));
-        foreach ($files as $file) {
-            (is_dir("$dir/$file")) ? $this->delTree("$dir/$file") : unlink("$dir/$file");
-        }
-        return rmdir($dir);
-    }
-
-    private function clearUp()
-    {
-        if ($name = realpath(getcwd() . '/./' . 'tests/tests/expect')) {
-            $this->delTree($name);
-        }
-    }
-
-    /**
-     * Sets up the fixture, for example, open a network connection.
-     * This method is called before a test is executed.
      *
+     * @param PublisherScanner $publisherScanner
+     * @return Command
      */
-    protected function setUp()
+    public function getCommand(PublisherScanner $publisherScanner)
     {
-        parent::setUp();
+        return new PublishCommand('publish', $publisherScanner, new Filesystem());
+    }
 
-        $this->input = $this->getMock(
-            InputInterface::class
+    protected function initiate($type)
+    {
+        $command = new InitCommand('init', $this->publisherScanner);
+
+        $inputMock = $this->getMock(InputInterface::class);
+
+        $inputMock->expects($this->any())->method('getArgument')->will($this->returnCallback(function ($argument) use ($type) {
+            switch ($argument) {
+                case 'initPath':
+                    return TEST_PATH;
+                case 'publisherType':
+                    return $type;
+            }
+        }));
+
+        $command->run($inputMock, $this->outputMock);
+
+        $this->assertSame(
+            $this->expectation,
+            $this->publisherScanner->scan()->getData()
         );
-
-        $this->output = $this->getMock(
-            OutputInterface::class
-        );
-
-
-
-        $this->output->expects($this->any())->method('writeln')
-            ->will($this->returnCallback(function ($message) {
-                //echo $message . \PHP_EOL;
-            }));
-
-        $this->testInstance = new PublishCommand();
-
-        $this->clearUp();
     }
 
-    private function makeGroupTest($type)
+    protected function prepareInput($package = '*')
     {
-        $launch = 0;
-
-        $this->input->expects($this->any())->method('getArgument')
-            ->will($this->returnCallback(function ($argument) use (&$launch, $type) {
-
-                switch ($argument) {
-                    case 'publish_path':
-                        switch ($launch) {
-                            case 0:
-                                return 'tests/tests/expect/'.$type;
-                            case 1:
-                                return 'tests/tests/expect/folder';
-                            case 2:
-                                return 'tests/tests/expect/folder';
-                        }
-                        break;
-                    case 'publish_group':
-                        switch ($launch) {
-                            case 0:
-                                return '*';
-                            case 1:
-                                return 'folder_file';
-                            case 2:
-                                return 'unknown';
-                        }
-                        break;
+        $this->inputMock->expects($this->any())->method('getArgument')
+            ->will($this->returnCallback(function ($arg) use ($package) {
+                switch ($arg) {
+                    case 'publishPath':
+                        return TEST_PATH;
+                    case 'package':
+                        return $package;
+                    case 'group':
+                        return '*';
+                    default:
+                        var_dump($arg) || die;
                 }
             }));
 
-        $this->input->expects($this->any())->method('getOption')
-            ->will($this->returnCallback(function ($option) use (&$launch, $type) {
-                switch ($option) {
-                    case 'configPath':
-                        return 'tests/tests/'.$type;
-                }
-            }));
+        $this->inputMock->expects($this->any())->method('getOption')->will($this->returnCallback(function ($opt) {
+            switch ($opt) {
+                case 'configPath':
+                    return TEST_PATH;
+                default:
+                    var_dump($opt) || die;
+            }
+        }));
+    }
 
-        $this->testInstance->run($this->input, $this->output);
+    public function testPHPSuccessPublish()
+    {
+        $this->initiate('php');
 
-        $this->assertTrue(file_exists(realpath('tests/tests/expect/'.$type.'/folderA/folderB/test.css')));
+        $this->prepareInput();
 
-        $this->assertTrue(file_exists(realpath('tests/tests/expect/'.$type.'/testTest.css')));
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
 
-        $launch += 1;
+    public function testJSON()
+    {
+        $this->initiate('json');
 
-        $this->testInstance->run($this->input, $this->output);
+        $this->prepareInput();
 
-        $this->assertTrue(file_exists(realpath('tests/tests/expect/folder/folderB/test.css')));
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
 
-        $this->assertTrue(file_exists(realpath('tests/tests/expect/folder/testTest.css')));
+    public function testYAML()
+    {
+        $this->initiate('yaml');
 
-        $launch += 1;
+        $this->prepareInput();
+
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
+
+    public function testYML()
+    {
+        $this->initiate('yml');
+
+        $this->prepareInput();
+
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
+
+    public function testNoVendorFolder()
+    {
+        $this->initiate('yml');
+
+        $filesystem = new Filesystem();
+
+        $this->prepareInput();
+
+        $filesystem->move(TEST_PATH . '/vendor', TEST_PATH . '/vendor1');
 
         try {
-            $this->testInstance->run($this->input, $this->output);
+            $this->testInstance->run($this->inputMock, $this->outputMock);
+        } catch (\Exception $e) {
+            $this->assertTrue($e instanceof \Exception);
+        }
+
+        $filesystem->move(TEST_PATH . '/vendor1', TEST_PATH . '/vendor');
+    }
+
+    public function testNoPublisher()
+    {
+        $this->prepareInput();
+
+        try {
+            $this->testInstance->run($this->inputMock, $this->outputMock);
         } catch (\Exception $e) {
             $this->assertTrue($e instanceof \Exception);
         }
     }
 
-    private function makeConfigTest($type)
+    public function testSpecific()
     {
-        $launch = 0;
+        $this->initiate('php');
 
-        $this->input->expects($this->any())->method('getArgument')
-            ->will($this->returnCallback(function ($argument) use (&$launch, $type) {
-                switch ($argument) {
-                    case 'publish_path':
-                        return 'tests/tests/expect/'.$type;
-                    case 'publish_group':
-                        return 'folder_file';
-                }
-            }));
+        $this->prepareInput('dubpub/publisher');
 
-        $this->input->expects($this->any())->method('getOption')
-            ->will($this->returnCallback(function ($option) use (&$launch, $type) {
-                switch ($option) {
-                    case 'configPath':
-                        switch ($launch) {
-                            case 0:
-                                return 'tests/tests/'.$type.'_bad_folder';
-                            case 1:
-                                return 'tests/tests/'.$type.'_bad';
-                            case 2:
-                                return 'tests/tests/'.$type;
-                        }
-                }
-            }));
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
+
+    public function testOverwrite()
+    {
+        $this->initiate('php');
+
+        $this->prepareInput();
+
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
+
+    public function testFailGlobals()
+    {
+        $this->initiate('php');
+
+        $this->prepareInput('dubpub/publisher');
+
+        $handler = $this->publisherScanner->scan(TEST_PATH);
+
+        $handler->setPackagePaths('dubpub/publisher', ['assets' => ['assets -> /absolute']]);
+
+        $handler->write();
 
         try {
-            $this->testInstance->run($this->input, $this->output);
+            $this->testInstance->run($this->inputMock, $this->outputMock);
         } catch (\Exception $e) {
             $this->assertTrue($e instanceof \Exception);
         }
 
-        $launch++;
+        $handler->setPackagePaths('dubpub/publisher', ['assets' => ['assets']]);
+
+        $handler->write();
+
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+
+
+        $handler->setPackagePaths('dubpub/publisher', ['assets' => ['assets -> / ->absolute']]);
+
+        $handler->write();
 
         try {
-            $this->testInstance->run($this->input, $this->output);
+            $this->testInstance->run($this->inputMock, $this->outputMock);
         } catch (\Exception $e) {
             $this->assertTrue($e instanceof \Exception);
         }
-
-        $launch++;
-
-        $this->testInstance->run($this->input, $this->output);
-
-        $this->assertTrue(file_exists('tests/tests/expect/'.$type.'/testTest.css'));
-        $this->assertTrue(file_exists('tests/tests/expect/'.$type.'/folderB'));
-    }
-
-    public function testPhpReaderGroups()
-    {
-        $this->makeGroupTest('php');
-    }
-
-    public function testYmlReaderGroups()
-    {
-        $this->makeGroupTest('yml');
-    }
-
-    public function testPhpReaderConfig()
-    {
-        $this->makeConfigTest('php');
-    }
-
-    public function testYmlReaderConfig()
-    {
-        $this->makeConfigTest('yml');
-    }
-
-    /**
-     * Tears down the fixture, for example, close a network connection.
-     * This method is called after a test is executed.
-     */
-    protected function tearDown()
-    {
-        $this->clearUp();
-        parent::tearDown(); // TODO: Change the autogenerated stub
     }
 }

@@ -4,7 +4,9 @@ composer.lock
 
 ## phpunit
 doc/
-
+tests/tests/php/configs/
+tests/tests/php/link/
+tests/tests/php/public/
 
 ### Ide
 .idea/

@@ -1,150 +1,43 @@
 <?php namespace Dubpub\Publisher\Handlers;
 
 use Dubpub\Publisher\Contracts\IPublisherHandler;
+use Symfony\Component\Yaml\Dumper;
+use Symfony\Component\Yaml\Parser;
 
-class PHPHandler implements IPublisherHandler
+class YAMLHandler extends AHandler implements IPublisherHandler
 {
     /**
-     * @var string
+     * @var Parser
      */
-    protected $path;
-    /**
-     * @var mixed
-     */
-    protected $data;
-    /**
-     * @var string
-     */
-    protected $composerName;
+    private $parser;
 
     /**
-     * @return string
+     * @var Dumper
      */
-    public function getPath()
+    private $dumper;
+
+    public function __construct(Parser $parser, Dumper $dumper)
     {
-        return $this->path;
+        $this->parser = $parser;
+        $this->dumper = $dumper;
     }
 
     /**
-     * @var string $path
-     * @return $this
-     * @throws \Exception
-     */
-    public function setPath($path)
-    {
-        $this->path = realpath($path);
-
-        if (!$this->path) {
-            throw new \Exception('Path doesn\'t exist: '. $path);
-        }
-
-        if (!file_exists($composerPath = $this->path . '/composer.json')) {
-            throw new \LogicException('Publisher file must be located same folder, as composer.json. Path: '.$path);
-        }
-
-        $this->composerName = json_decode(file_get_contents($composerPath))->name;
-
-        return $this;
-    }
-
-    /**
-     * @param bool $autoCreate
+     * @param $filePath
+     * @param array $data
      * @return bool
      */
-    public function read($autoCreate = false)
+    public function writeData($filePath, array $data)
     {
-        if (!$this->exists()) {
-            if (!$autoCreate) {
-                return false;
-            } else {
-                $this->create();
-            }
-        }
-
-        $this->data = include $this->path . '/.publisher.php';
-
-        if (is_array($this->data)) {
-            $this->data = (object) $this->data;
-            return true;
-        }
-
-        return false;
+        return file_put_contents($filePath, $this->dumper->dump($data, 4)) !== false;
     }
 
     /**
-     * @return bool
+     * @param $filePath
+     * @return array
      */
-    public function write()
+    public function readData($filePath)
     {
-        return file_put_contents(
-            $this->path . '/.publisher.php', '<?php return '.var_export_braces((array)$this->data).';'
-        );
-    }
-
-    /**
-     * @return bool
-     */
-    public function create()
-    {
-        $data = [$this->composerName => []];
-        return file_put_contents($this->path . '/.publisher.php', '<?php return '.var_export($data, true).';');
-    }
-
-    /**
-     * @return bool
-     */
-    public function exists()
-    {
-        return file_exists($this->path . '/.publisher.php');
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getData()
-    {
-        return $this->data;
-    }
-
-    /**
-     * @return array|string[]
-     */
-    public function getPackageNames()
-    {
-        return array_keys((array) $this->data);
-    }
-
-    /**
-     * @param $vendorName
-     * @return array|\string[]
-     */
-    public function getPackagePathGroups($vendorName)
-    {
-        return $this->data->{$vendorName};
-    }
-
-    public function setPackagePaths($packageName, array $paths)
-    {
-        $this->data->{$packageName} = $paths;
-
-        return $this;
-    }
-
-    public function getComposerName()
-    {
-        return $this->composerName;
-    }
-
-    /**
-     * @param IPublisherHandler $handler
-     * @return $this
-     */
-    public function merge(IPublisherHandler $handler)
-    {
-        $newData = (array) $handler->getPackagePathGroups($newComposerName = $handler->getComposerName());
-
-        $this->setPackagePaths($newComposerName, $newData);
-
-        return $this;
+        return $this->parser->parse(file_get_contents($filePath));
     }
 }

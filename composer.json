@@ -1,5 +1,6 @@
 {
   "name": "dubpub/publisher",
+  "bin": ["publisher"],
   "description": "Publisher for assets/configs",
   "authors": [
     {
@@ -10,12 +11,15 @@
   "autoload": {
     "psr-4": {
       "Dubpub\\Publisher\\": "./src/Dubpub/Publisher"
-    }
+    },
+    "files": [
+
+    ]
   },
   "require": {
     "symfony/console": "2.7.*",
     "symfony/yaml": "2.7.*",
-    "symfony/filesystem": "2.7.*"
+    "illuminate/filesystem": "5.1.*"
   },
   "minimum-stability": "stable"
 }

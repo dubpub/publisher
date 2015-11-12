@@ -1,163 +1,255 @@
 <?php namespace Dubpub\Publisher\Commands;
 
+use Dubpub\Publisher\Contracts\IPublisherHandler;
+use Dubpub\Publisher\Models\PublishModel;
+use Dubpub\Publisher\PublisherScanner;
+use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Filesystem\Filesystem;
-use Dubpub\Publisher\Contracts\IConfigGroup;
-use Dubpub\Publisher\Contracts\IConfigReader;
-use Dubpub\Publisher\Readers\PHP\PHPReader;
-use Dubpub\Publisher\Readers\Yaml\YAMLReader;
 
 class PublishCommand extends Command
 {
     /**
-     * Config file
-     * @var string
+     * @var PublisherScanner
      */
-    protected $configFile;
+    private $publisherScanner;
 
     /**
      * @var Filesystem
      */
     protected $fileSystem;
 
-    protected $supportedTypes = [
-        'php' => PHPReader::class,
-        'yml' => YAMLReader::class,
-        'yaml' => YAMLReader::class
-    ];
-
-    protected function configure()
+    public function __construct($name = null, PublisherScanner $publisherScanner)
     {
-        $this->addArgument('publish_group', InputArgument::OPTIONAL, 'Group to publish', '*');
-
-        $this->addArgument('publish_path', InputArgument::OPTIONAL, 'Path where to publish', getcwd());
-        $this->addOption('configPath', 'c', InputOption::VALUE_OPTIONAL, 'Configure file', getcwd());
-
-        $this->setDescription(
-            "Publishes assets, provided in .publisher.".implode('|', array_keys($this->supportedTypes))
-        );
-
-        $this->setName('publish');
-
+        $this->publisherScanner = $publisherScanner;
         $this->fileSystem = new Filesystem();
-
-    }
-
-    /**
-     * @param $configFileDirectory
-     * @param OutputInterface $output
-     * @return PHPReader
-     */
-    protected function loadConfigReader($configFileDirectory, OutputInterface $output)
-    {
-        foreach ($this->supportedTypes as $type => $reader) {
-            if (file_exists($configFilePath = realpath($configFileDirectory . '/.publisher.' . $type))) {
-                $configReader = new $this->supportedTypes[$type]();
-                $configReader->setPath($configFilePath);
-
-                $output->writeln("<info>Reading config from: {$configFilePath}</info>");
-
-                $configReader->read();
-                return $configReader;
-            }
-        }
-
-        $fileNames = [];
-
-        foreach (array_keys($this->supportedTypes) as $type) {
-            $fileNames[] = '.publisher.'.$type;
-        }
-
-        throw new \InvalidArgumentException(
-            'Unable to locate any config file, try to create one of those: ' . implode(', ', $fileNames)
-        );
+        parent::__construct($name);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $configFileDirectory = realpath($input->getOption('configPath'));
+        $model = new PublishModel($input);
 
-        if (!$configFileDirectory) {
-            throw new \InvalidArgumentException(
-                'Unable to locate config provided config file directory'
+        $model->validate();
+
+        // setting path to scan for .publisher.* config file
+        $this->publisherScanner->setPath($model->getConfigPath());
+
+        /**
+         * @var IPublisherHandler $handler
+         */
+        $handler = $this->publisherScanner->scan(false);
+
+        // if handler is null, throwing an exception
+        // with message
+        if (!$handler) {
+            // retrieving available extensions
+            // and making mask-like string
+            $extensions = implode('|', $this->publisherScanner->getSupportedExtensions());
+            throw new \Exception('You have to create .publisher.(' . $extensions. ') file first.');
+        }
+
+        // initializing empty package list
+        $packageList = [];
+
+        // checking we need to publish
+        // every package entry
+        if ($model->getPackageEntry() == '*') {
+            $packageList = $handler->getPackageNames();
+        } else {
+            // if package name is specified
+            // adding it into package list
+            $packageList[] = $model->getPackageEntry();
+        }
+
+        // checking if vendor folder is available
+        // if not - throwing an exception
+        if (!($vendorPath = realpath($model->getConfigPath() . '/vendor'))) {
+            throw new \Exception(
+                "Unable to locate \"vendor\" folder. Try to run \"composer update\""
             );
         }
 
-        /**
-         * @var IConfigReader
-         */
-        $configReader = $this->loadConfigReader($configFileDirectory, $output);
+        // iterating through packages
+        foreach ($packageList as $packageName) {
+            $output->writeln("<info>Handling package: </info>{$packageName}");
 
-        $launchPath = getcwd();
+            /** @var string $packagePath Path to package directory*/
+            $packagePath =  $vendorPath . DIRECTORY_SEPARATOR . $packageName;
 
-        $publishPath = $input->getArgument('publish_path');
+            // retrieving group/fileList as groupName => fileList
+            $fileList = $handler->getPackagePathGroups($packageName);
 
-        if (!(realpath($publishPath))) {
-            $publishPath = $publishPath[0] == '/' ? $publishPath :  $launchPath . '/' . ltrim($publishPath, './\\');
+            // iterating through groups
+            foreach ($fileList as $groupName => $fileList) {
+                $output->writeln(
+                    "<info>  Handling group: </info>{$groupName}"
+                );
 
-            $this->fileSystem->mkdir($publishPath, 0777);
+                // iterating through file list
+                foreach ($fileList as $fileString) {
+                    // removing extra space characters
+                    $fileString = preg_replace('/(\ {1,})/is', '', $fileString);
 
-            $publishPath = realpath($publishPath);
+                    $output->writeln("<info>  Handling item:\n  -  </info><comment>" . $fileString . "</comment>");
 
-            $output->writeln("<info>Created: {$publishPath}</info>");
-        } else {
-            $publishPath = realpath($publishPath[0] == '/' ? $publishPath :  $launchPath . '/' . ltrim($publishPath, './\\'));;
-        }
+                    $fileString = preg_replace('/(\ {0,1})/is', '', $fileString);
 
-        $output->writeln("<info>Writing to path: {$publishPath}</info>" . \PHP_EOL);
+                    // checking
+                    $fileStringNotation = explode('->', $fileString);
 
-        $groups = ($groupName = $input->getArgument('publish_group')) == '*' ?
-            $configReader->getGroups() :
-            $configReader->getGroupByNames([$groupName]);
+                    // if file notation contains copy/link
+                    // via destination "->" symbol
+                    if (count($fileStringNotation) == 2) {
+                        // throwing an exception if target path is absolute
 
-
-        /** @var IConfigGroup[] $groups */
-        foreach($groups as $group) {
-            $output->writeln("<info>Handling group \"{$group->getName()}\"</info>");
-
-            foreach ($group->getPaths() as $path) {
-                $output->writeln('Handling path: ' . $path);
-
-                if (is_dir($sourceFile = realpath($_path = $path[0] == '/' ? $path : (getcwd() . '/' . $path)))) {
-
-                    $output->writeln('Copying target directory: ' . $sourceFile);
-
-                    $directoryIterator = new \RecursiveDirectoryIterator($sourceFile, \RecursiveDirectoryIterator::SKIP_DOTS);
-                    $iterator = new \RecursiveIteratorIterator($directoryIterator, \RecursiveIteratorIterator::SELF_FIRST);
-
-                    $_publishPath = $publishPath . '/' . basename($sourceFile);
-
-                    foreach ($iterator as $item) {
-                        if ($item->isDir()) {
-                            $this->fileSystem->mkdir($sourceFile . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
-
-                        } else {
-                            $this->fileSystem->copy($item, $_publishPath . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
+                        if ($fileStringNotation[1][0] == '/') {
+                            throw new \LogicException('.publisher does not work with absolute paths');
                         }
 
+                        // composing source notation - (publish path + directory separator + distination)
+                        $fileStringNotation[1] = $model->getPublishPath() . '/' . $fileStringNotation[1];
 
-                        $output->writeln('Copying target: ' . $item . 'to' . $_publishPath);
-                    }
+                        // checking if source want to be published
+                        // in one of possible locations
+                        // e.g.: "{public,web}/assets" will check if
+                        // public/assets or public/web is available.
+                        // e.g.: "assets/{scripts,js}" will check if
+                        // assets/scripts or assets/js is available.
+                        $reg = '/(.*?)(\{)([\w\d\.\-\@\:\,]{1,})(\})([\w\d\/\.\-\@\:\,]{0,})/i';
 
+                        if (preg_match($reg, $fileStringNotation[1], $matches)) {
+                            // converting variants into array
+                            // e.g. {public,web,htdocs}/assets will produce ['public', 'web', 'htdocs']
+                            $variants = explode(',', $matches[3]);
 
-                    //
-                } elseif (file_exists($sourceFile)) {
-                    $path = realpath($path[0] == '/' ? $path : getcwd() . '/' . $path);
-                    if ($path) {
-                        $output->writeln('Copying target file: ' . $path . 'to' . $publishPath);
-                        $this->fileSystem->copy($path, $publishPath . '/' . basename($path), true);
+                            // suppose that none of variants exists
+                            $existed = false;
+
+                            foreach ($variants as $publishVariant) {
+                                // if path exists setting it as
+                                if ($existed = realpath($matches[1] . $publishVariant)) {
+                                    // replacing source notation with target path
+                                    // and breaking the loop
+                                    $fileStringNotation[1] = $matches[1] . $publishVariant . $matches[5];
+                                    break;
+                                }
+                            }
+
+                            if (!$existed) {
+                                // if none of variants exists
+                                // replacing source notation with first "posible"
+                                // target path
+                                $fileStringNotation[1] = $matches[1] . $variants[0] . $matches[5];
+                            }
+                        }
+
+                    } elseif(count($fileStringNotation) == 1) {
+                        // if file notation string does not
+                        // contain destination symbol
+                        $fileStringNotation[1] = $model->getPublishPath();
                     } else {
-                        $output->writeln('Failed: ' . $path);
+                        // if we meet nonsense typo
+                        throw new \LogicException("Unexpected syntax in:" . $fileString);
                     }
-                } else {
-                    var_dump($sourceFile, $_path) || die;
+
+
+                    list($sourcesPath, $targetPath) = $fileStringNotation;
+
+                    // creating targetPath if it does not exist
+                    if (! $this->fileSystem->isDirectory($targetPath)) {
+                        $this->fileSystem->makeDirectory($targetPath, 0777, true, true);
+                    }
+
+                    // if sourcesPath contains link syntax
+                    if (substr_count($sourcesPath, '@') == 0) {
+                        // merging package path and sourcePath
+                        $sourcesPath = $packagePath . '/' . trim($sourcesPath, '\\/');
+
+                        // getting file/files/folder by sourcePath mask
+                        foreach (glob($sourcesPath) as $source) {
+                            $output->writeln(
+                                "     Copying:\n\t" .
+                                "<info>source:</info> [<comment>{$source}</comment>]" .
+                                "\n\t" .
+                                "<info>target:</info> [<comment>{$targetPath}</comment>]"
+                            );
+
+                            // if source is directory
+                            if (is_dir($source)) {
+                                $this->fileSystem->copyDirectory($source, $targetPath);
+                            } else {
+                                $this->fileSystem->copy($source, $targetPath . '/' . basename($source));
+                            }
+
+                        }
+                    } else {
+                        // composing sourcePath and replacing @ character
+                        $sourcesPath = $packagePath . '/' . str_replace('@', '', trim($sourcesPath, '\\/'));
+
+                        // running sourcePath as mask
+                        foreach (glob($sourcesPath) as $source) {
+                            // link target path
+                            $_currentTarget = $targetPath . '/' . basename($source) ;
+
+                            if (is_link($_currentTarget)) {
+                                $output->writeln(
+                                    '     Removing old symlynk at '. $_currentTarget
+                                );
+                                unlink($_currentTarget);
+                            }
+                            $output->writeln(
+                                "     Linking:\n\t" .
+                                "<info>source:</info> [<comment>{$source}</comment>]" .
+                                "\n\t" .
+                                "<info>target:</info> [<comment>{$targetPath}</comment>]"
+                            );
+
+                            symlink($source, $_currentTarget);
+                        }
+                    }
+
+                    $output->writeln("");
                 }
             }
-        }
 
+            $output->writeln('');
+        }
+    }
+
+    protected function configure()
+    {
+        $this->addArgument('package', InputArgument::OPTIONAL, 'Package to publish. All by default', '*');
+
+        $this->addArgument(
+            'publishPath',
+            InputArgument::OPTIONAL,
+            'Path where to publish. Default path is launch path:',
+            getcwd()
+        );
+
+        $this->addArgument(
+            'publishGroup',
+            InputArgument::IS_ARRAY,
+            'Group to publish. Works if publish package is not "*", default "*"',
+            ['*']
+        );
+
+        $this->addOption(
+            'configPath',
+            'c',
+            InputArgument::OPTIONAL,
+            'Config path. Default path is launch path:',
+            getcwd()
+        );
+
+        $this->setDescription(
+            sprintf(
+                "Publishes assets, provided in .publisher.{%s}",
+                implode(',', $this->publisherScanner->getSupportedExtensions())
+            )
+        );
     }
 }
