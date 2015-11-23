@@ -4,12 +4,120 @@
 use Dubpub\Publisher\Handlers\JSONHandler;
 use Dubpub\Publisher\Handlers\PHPHandler;
 use Dubpub\Publisher\Handlers\YAMLHandler;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Dumper;
 use Symfony\Component\Yaml\Parser;
 
 include  __DIR__. '/vendor/autoload.php';
 
 $scanner = new \Dubpub\Publisher\PublisherScanner();
+
+class DemoCommand extends \Symfony\Component\Console\Command\Command
+{
+    protected function configure()
+    {
+        $this->setName('demo');
+
+        $this->addArgument(
+            'package',
+            InputArgument::OPTIONAL,
+            'Package name, coma separated package names or "*"',
+            '*'
+        );
+
+        $this->addArgument(
+            'group',
+            InputArgument::OPTIONAL,
+            'Group name, coma separated group names or "*"',
+            '*'
+        );
+    }
+
+    private function checkParam(InputInterface $input, $paramName, $regExpAny, $regExpOne)
+    {
+        $value = $input->getArgument($paramName);
+
+        if ($value != '*') {
+            // removing extra space characters if argument is passed
+            // in quotes
+            $value = preg_replace('/(\ {1,}|\*{1,})/', '', $value);
+
+            // checking if it's at least one entry
+            if (!preg_match($regExpAny, $value)) {
+                throw new \InvalidArgumentException('Invalid ' . $paramName . ' format: ' . $value);
+            }
+
+            // imploding entries names
+            $entryNames = explode(',', $value);
+
+            foreach ($entryNames as $entryName) {
+                if (!preg_match($regExpOne, $entryName)) {
+                    throw new \InvalidArgumentException('Invalid '. $paramName . ' format: ' . $entryName);
+                }
+            }
+
+            // updating entry value
+            $input->setArgument($paramName, $value);
+        }
+    }
+
+    /**
+     * Interacts with the user.
+     *
+     * This method is executed before the InputDefinition is validated.
+     * This means that this is the only place where the command can
+     * interactively ask for values of missing required arguments.
+     *
+     * @param InputInterface $input An InputInterface instance
+     * @param OutputInterface $output An OutputInterface instance
+     */
+    protected function interact(InputInterface $input, OutputInterface $output)
+    {
+        // checks if value contains at least one package name
+        $regExpAny = '/([\_\-\.\d\w]{1,})(\/)([\-\.\d\w]{1,})/is';
+        // checks if value contains only one package name
+        $regExpOne = '/([\_\-\.\d\w]{1,})(\/)([\-\.\d\w]{1,})$/is';
+
+        $this->checkParam($input, 'package', $regExpAny, $regExpOne);
+
+
+        $regExpAny = '/([\_\-\.\d\w\ \*]{1,})/is';
+
+        $this->checkParam($input, 'group', $regExpAny, $regExpAny);
+
+        return;
+
+        $group = $input->getArgument('group');
+
+
+        if ($group != '*') {
+            $group = preg_replace('/(\ {1,})/', '', $group);
+
+            // checking if it's at least one paackage
+            if (!preg_match($regExpAny, $package)) {
+                throw new \InvalidArgumentException('Invalid package format: ' . $package);
+            }
+
+            $packageNames = explode(',', $package);
+
+            foreach ($packageNames as $packageName) {
+                if (!preg_match($regExpOne, $packageName)) {
+                    throw new \InvalidArgumentException('Invalid package format: ' . $packageName);
+                }
+            }
+
+            // updating package value
+            $input->setArgument('package', $package);
+        }
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        var_dump($input->getArguments('package')) || die;
+    }
+}
 
 $scanner->registerTypeHandler('php', PHPHandler::class);
 $scanner->registerTypeHandler('json', JSONHandler::class);
@@ -21,4 +129,5 @@ $application->setName('Dubpub: publisher');
 $application->setVersion('1.0');
 $application->add(new \Dubpub\Publisher\Commands\PublishCommand('publish', $scanner));
 $application->add(new \Dubpub\Publisher\Commands\InitCommand('init', $scanner));
+$application->add(new \DemoCommand());
 $application->run();

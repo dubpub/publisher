@@ -167,7 +167,7 @@ class PublishCommandTest extends \HelperTest
 
         $handler = $this->publisherScanner->scan(TEST_PATH);
 
-        $handler->setPackagePaths('dubpub/publisher', ['assets' => ['assets -> /absolute']]);
+        $handler->setPackageGroups('dubpub/publisher', ['assets' => ['assets -> /absolute']]);
 
         $handler->write();
 
@@ -177,14 +177,14 @@ class PublishCommandTest extends \HelperTest
             $this->assertTrue($e instanceof \Exception);
         }
 
-        $handler->setPackagePaths('dubpub/publisher', ['assets' => ['assets']]);
+        $handler->setPackageGroups('dubpub/publisher', ['assets' => ['assets']]);
 
         $handler->write();
 
         $this->testInstance->run($this->inputMock, $this->outputMock);
 
 
-        $handler->setPackagePaths('dubpub/publisher', ['assets' => ['assets -> / ->absolute']]);
+        $handler->setPackageGroups('dubpub/publisher', ['assets' => ['assets -> / ->absolute']]);
 
         $handler->write();
 

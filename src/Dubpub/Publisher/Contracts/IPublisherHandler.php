@@ -41,17 +41,30 @@ interface IPublisherHandler
     public function getPackageNames();
 
     /**
-     * @param $vendorName
-     * @return array|string[]
+     * @param string $packageName
+     * @return bool
      */
-    public function getPackagePathGroups($vendorName);
+    public function packageExists($packageName);
 
     /**
      * @param $packageName
-     * @param array $paths
+     * @return array|string[]
+     */
+    public function getGroupsByPackageName($packageName);
+
+    /**
+     * @param string $packageName
+     * @param string $groupName
+     * @return bool
+     */
+    public function packageHasGroup($packageName, $groupName);
+
+    /**
+     * @param $packageName
+     * @param array $groups
      * @return $this
      */
-    public function setPackagePaths($packageName, array $paths);
+    public function setPackageGroups($packageName, array $groups);
 
     /**
      * @return string

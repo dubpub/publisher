@@ -1,16 +1,26 @@
 <?php namespace Dubpub\Publisher\Commands;
 
 use Dubpub\Publisher\Contracts\IPublisherHandler;
+use Dubpub\Publisher\Filters\PublishFilter;
 use Dubpub\Publisher\Models\PublishModel;
 use Dubpub\Publisher\PublisherScanner;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class PublishCommand extends Command
 {
+    const ARG_PACKAGE_DESC = "Package to publish. All by default.";
+
+    const ARG_GROUP_DESC =  "Group to publish. All by default.";
+
+    const ARG_PUBLISH_PATH_DESC = "Path where to publish. Default path is launch path.";
+
+    const OPT_OPTIONS_PATH = "Config path. Default path is launch path.";
+
     /**
      * @var PublisherScanner
      */
@@ -28,11 +38,19 @@ class PublishCommand extends Command
         parent::__construct($name);
     }
 
+
+    protected function interact(InputInterface $input, OutputInterface $output)
+    {
+        $filter = new PublishFilter($input);
+
+        // preparing package and group params:
+        // validating and parsing
+        $filter->process();
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $model = new PublishModel($input);
-
-        $model->validate();
 
         // setting path to scan for .publisher.* config file
         $this->publisherScanner->setPath($model->getConfigPath());
@@ -61,8 +79,13 @@ class PublishCommand extends Command
         } else {
             // if package name is specified
             // adding it into package list
-            $packageList[] = $model->getPackageEntry();
+            $packageList = explode(',', $model->getPackageEntry());
         }
+
+        if (($groupList = $model->getGroupEntry()) != '*') {
+            $groupList = explode(',', $model->getGroupEntry());
+        }
+
 
         // checking if vendor folder is available
         // if not - throwing an exception
@@ -80,7 +103,7 @@ class PublishCommand extends Command
             $packagePath =  $vendorPath . DIRECTORY_SEPARATOR . $packageName;
 
             // retrieving group/fileList as groupName => fileList
-            $fileList = $handler->getPackagePathGroups($packageName);
+            $fileList = $handler->getGroupsByPackageName($packageName);
 
             // iterating through groups
             foreach ($fileList as $groupName => $fileList) {
@@ -221,35 +244,19 @@ class PublishCommand extends Command
 
     protected function configure()
     {
-        $this->addArgument('package', InputArgument::OPTIONAL, 'Package to publish. All by default', '*');
+        $this->addArgument('package', InputArgument::OPTIONAL, self::ARG_PACKAGE_DESC, '*');
 
-        $this->addArgument(
-            'publishPath',
-            InputArgument::OPTIONAL,
-            'Path where to publish. Default path is launch path:',
-            getcwd()
+        $this->addArgument('group', InputArgument::OPTIONAL, self::ARG_GROUP_DESC, '*');
+
+        $this->addOption('publishPath', 'p', InputOption::VALUE_OPTIONAL, self::ARG_PUBLISH_PATH_DESC, getcwd());
+
+        $this->addOption('configPath', 'c', InputOption::VALUE_OPTIONAL, self::OPT_OPTIONS_PATH, getcwd());
+
+        $description = sprintf(
+            "Publishes assets, provided in .publisher.{%s}",
+            implode(',', $this->publisherScanner->getSupportedExtensions())
         );
 
-        $this->addArgument(
-            'publishGroup',
-            InputArgument::IS_ARRAY,
-            'Group to publish. Works if publish package is not "*", default "*"',
-            ['*']
-        );
-
-        $this->addOption(
-            'configPath',
-            'c',
-            InputArgument::OPTIONAL,
-            'Config path. Default path is launch path:',
-            getcwd()
-        );
-
-        $this->setDescription(
-            sprintf(
-                "Publishes assets, provided in .publisher.{%s}",
-                implode(',', $this->publisherScanner->getSupportedExtensions())
-            )
-        );
+        $this->setDescription($description);
     }
 }

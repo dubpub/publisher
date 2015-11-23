@@ -127,22 +127,41 @@ abstract class AHandler implements IPublisherHandler
     }
 
     /**
-     * @param $vendorName
-     * @return array|string[]
+     * @param string $packageName
+     * @return bool
      */
-    public function getPackagePathGroups($vendorName)
+    public function packageExists($packageName)
     {
-        return $this->data[$vendorName];
+        return array_key_exists($packageName, $this->data);
     }
 
     /**
      * @param $packageName
-     * @param array $paths
+     * @return array|string[]
+     */
+    public function getGroupsByPackageName($packageName)
+    {
+        return $this->data[$packageName];
+    }
+
+    /**
+     * @param string $packageName
+     * @param string $groupName
+     * @return bool
+     */
+    public function packageHasGroup($packageName, $groupName)
+    {
+        return $this->packageExists($packageName) && array_key_exists($groupName, $this->data[$packageName]);
+    }
+
+    /**
+     * @param $packageName
+     * @param array $groups
      * @return $this
      */
-    public function setPackagePaths($packageName, array $paths)
+    public function setPackageGroups($packageName, array $groups)
     {
-        $this->data[$packageName] = $paths;
+        $this->data[$packageName] = $groups;
 
         return $this;
     }
@@ -161,9 +180,9 @@ abstract class AHandler implements IPublisherHandler
      */
     public function merge(IPublisherHandler $handler)
     {
-        $newData = $handler->getPackagePathGroups($newComposerName = $handler->getComposerName());
+        $newData = $handler->getGroupsByPackageName($newComposerName = $handler->getComposerName());
 
-        $this->setPackagePaths($newComposerName, $newData);
+        $this->setPackageGroups($newComposerName, $newData);
 
         return $this;
     }
