@@ -86,7 +86,8 @@ class PublishCommand extends Command
             $groupList = explode(',', $model->getGroupEntry());
         }
 
-
+        $groupList = (array) $groupList;
+        
         // checking if vendor folder is available
         // if not - throwing an exception
         if (!($vendorPath = realpath($model->getConfigPath() . '/vendor'))) {
@@ -102,31 +103,57 @@ class PublishCommand extends Command
             /** @var string $packagePath Path to package directory*/
             $packagePath =  $vendorPath . DIRECTORY_SEPARATOR . $packageName;
 
+            // skipping if package is not locatable
+            if (!$handler->packageExists($packageName)) {
+                $output->writeln(
+                    "<comment>  [Skipped] Unable to locate \"{$packageName}\" in .publisher file.</comment>"
+                );
+                continue;
+            }
+
             // retrieving group/fileList as groupName => fileList
-            $fileList = $handler->getGroupsByPackageName($packageName);
+            $groupCollection = $handler->getGroupsByPackageName($packageName);
+
+            // if group argument is *, we leave collection as it is,
+            // otherwise we take only specified key => value pairs
+
+            if ($groupList != ['*']) {
+                $groupCollection = array_only($groupCollection, $groupList);
+                foreach (array_diff($groupList, array_keys($groupCollection)) as $ignored) {
+                    $output->writeln(
+                        "<comment>  [Skipped] Group \"{$ignored}\" not found in \"{$packageName}\".</comment>"
+                    );
+                }
+            }
+
 
             // iterating through groups
-            foreach ($fileList as $groupName => $fileList) {
+            foreach ($groupCollection as $groupName => $fileList) {
                 $output->writeln(
                     "<info>  Handling group: </info>{$groupName}"
                 );
 
                 // iterating through file list
                 foreach ($fileList as $fileString) {
-                    // removing extra space characters
+                    // removing extra space characters for nice message
                     $fileString = preg_replace('/(\ {1,})/is', '', $fileString);
 
                     $output->writeln("<info>  Handling item:\n  -  </info><comment>" . $fileString . "</comment>");
 
+                    // removing extra space characters for further work
                     $fileString = preg_replace('/(\ {0,1})/is', '', $fileString);
 
-                    // checking
+                    // extracting file string notation
                     $fileStringNotation = explode('->', $fileString);
 
                     // if file notation contains copy/link
                     // via destination "->" symbol
                     if (count($fileStringNotation) == 2) {
                         // throwing an exception if target path is absolute
+
+                        if ($fileStringNotation[0][0] == '/') {
+                            throw new \LogicException('.publisher does not work with absolute paths');
+                        }
 
                         if ($fileStringNotation[1][0] == '/') {
                             throw new \LogicException('.publisher does not work with absolute paths');
@@ -172,6 +199,11 @@ class PublishCommand extends Command
                     } elseif(count($fileStringNotation) == 1) {
                         // if file notation string does not
                         // contain destination symbol
+
+                        if ($fileStringNotation[0][0] == '/') {
+                            throw new \LogicException('.publisher does not work with absolute paths');
+                        }
+
                         $fileStringNotation[1] = $model->getPublishPath();
                     } else {
                         // if we meet nonsense typo
