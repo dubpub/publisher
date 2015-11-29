@@ -48,17 +48,15 @@ class PublishCommandTest extends \HelperTest
         );
     }
 
-    protected function prepareInput($package = '*')
+    protected function prepareInput($package = '*', $group = '*')
     {
         $this->inputMock->expects($this->any())->method('getArgument')
-            ->will($this->returnCallback(function ($arg) use ($package) {
+            ->will($this->returnCallback(function ($arg) use ($package, $group) {
                 switch ($arg) {
-                    case 'publishPath':
-                        return TEST_PATH;
                     case 'package':
                         return $package;
                     case 'group':
-                        return '*';
+                        return $group;
                     default:
                         var_dump($arg) || die;
                 }
@@ -67,6 +65,8 @@ class PublishCommandTest extends \HelperTest
         $this->inputMock->expects($this->any())->method('getOption')->will($this->returnCallback(function ($opt) {
             switch ($opt) {
                 case 'configPath':
+                    return TEST_PATH;
+                case 'publishPath':
                     return TEST_PATH;
                 default:
                     var_dump($opt) || die;
@@ -144,7 +144,16 @@ class PublishCommandTest extends \HelperTest
     {
         $this->initiate('php');
 
-        $this->prepareInput('dubpub/publisher');
+        $this->prepareInput('dubpub/publisher,vendor/package');
+
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
+
+    public function testSpecificGroup()
+    {
+        $this->initiate('php');
+
+        $this->prepareInput('dubpub/publisher,vendor/package', 'assets,links');
 
         $this->testInstance->run($this->inputMock, $this->outputMock);
     }
@@ -168,6 +177,26 @@ class PublishCommandTest extends \HelperTest
         $handler = $this->publisherScanner->scan(TEST_PATH);
 
         $handler->setPackageGroups('dubpub/publisher', ['assets' => ['assets -> /absolute']]);
+
+        $handler->write();
+
+        try {
+            $this->testInstance->run($this->inputMock, $this->outputMock);
+        } catch (\Exception $e) {
+            $this->assertTrue($e instanceof \Exception);
+        }
+
+        $handler->setPackageGroups('dubpub/publisher', ['assets' => ['/assets']]);
+
+        $handler->write();
+
+        try {
+            $this->testInstance->run($this->inputMock, $this->outputMock);
+        } catch (\Exception $e) {
+            $this->assertTrue($e instanceof \Exception);
+        }
+
+        $handler->setPackageGroups('dubpub/publisher', ['assets' => ['/assets -> /assets']]);
 
         $handler->write();
 

@@ -1,10 +1,11 @@
 <?php namespace Dubpub\Publisher\Handlers;
 
-use Dubpub\Publisher\Contracts\IPublisherHandler;
+use Dubpub\Publisher\Abstraction\Abstracts\APublisherHandler;
+use Dubpub\Publisher\Abstraction\Contracts\IPublisherHandler;
 use Symfony\Component\Yaml\Dumper;
 use Symfony\Component\Yaml\Parser;
 
-class YAMLHandler extends AHandler implements IPublisherHandler
+class YAMLHandler extends APublisherHandler implements IPublisherHandler
 {
     /**
      * @var Parser

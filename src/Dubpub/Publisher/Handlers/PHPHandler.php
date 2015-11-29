@@ -1,8 +1,9 @@
 <?php namespace Dubpub\Publisher\Handlers;
 
-use Dubpub\Publisher\Contracts\IPublisherHandler;
+use Dubpub\Publisher\Abstraction\Abstracts\APublisherHandler;
+use Dubpub\Publisher\Abstraction\Contracts\IPublisherHandler;
 
-class PHPHandler extends AHandler implements IPublisherHandler
+class PHPHandler extends APublisherHandler implements IPublisherHandler
 {
     /**
      * @param $filePath

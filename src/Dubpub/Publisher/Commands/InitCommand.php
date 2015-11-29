@@ -1,6 +1,6 @@
 <?php namespace Dubpub\Publisher\Commands;
 
-use Dubpub\Publisher\Contracts\IPublisherHandler;
+use Dubpub\Publisher\Abstraction\Contracts\IPublisherHandler;
 use Dubpub\Publisher\PublisherScanner;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

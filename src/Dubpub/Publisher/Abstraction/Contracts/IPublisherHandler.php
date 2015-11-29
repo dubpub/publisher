@@ -1,4 +1,4 @@
-<?php namespace Dubpub\Publisher\Contracts;
+<?php namespace Dubpub\Publisher\Abstraction\Contracts;
 
 interface IPublisherHandler
 {
@@ -51,13 +51,6 @@ interface IPublisherHandler
      * @return array|string[]
      */
     public function getGroupsByPackageName($packageName);
-
-    /**
-     * @param string $packageName
-     * @param string $groupName
-     * @return bool
-     */
-    public function packageHasGroup($packageName, $groupName);
 
     /**
      * @param $packageName

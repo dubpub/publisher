@@ -20,78 +20,42 @@ class PublishModelTest extends \PHPUnit_Framework_TestCase
         $this->inputMock = $this->getMock(InputInterface::class);
     }
 
-    public function testFailConfigPath()
+    protected function prepareInput($badInput = false)
     {
-        $this->inputMock->expects($this->any())->method('getOption')->will($this->returnCallback(function () {
-            return uniqid();
-        }));
 
-        try {
-            $model = new PublishModel($this->inputMock);
-        } catch (\Exception $exception) {
-            $this->assertTrue($exception instanceof \InvalidArgumentException);
-        }
+        $this->inputMock->expects($this->any())->method('getArgument')
+            ->will($this->returnCallback(function () {
+                switch ($agr = func_get_arg(0)) {
+                    case 'package':
+                    case 'group':
+                        return '*';
+                    default:
+                        var_dump($agr) || die;
+                }
+            }));
+
+        $this->inputMock->expects($this->any())->method('getOption')
+            ->will($this->returnCallback(function () use ($badInput) {
+                switch ($agr = func_get_arg(0)) {
+                    case 'configPath':
+                    case 'publishPath':
+                        return $badInput ? uniqid() : getcwd();
+                    default:
+                        var_dump($agr) || die;
+                }
+            }));
+
     }
 
-    public function testFailPublishPath()
+    public function testFailPaths()
     {
-
-        $this->inputMock->expects($this->any())->method('getArgument')->will($this->returnCallback(function () {
-            switch (func_get_arg(0)) {
-                case 'publishPath':
-                    return uniqid();
-            }
-        }));
-
-        $this->inputMock->expects($this->any())->method('getOption')->will($this->returnValue(TEST_PATH));
-
-
-        try {
-            $model = new PublishModel($this->inputMock);
-            $model->validate();
-        } catch (\Exception $exception) {
-            $this->assertTrue($exception instanceof \InvalidArgumentException);
-        }
-    }
-
-    public function testFailPackageEntry()
-    {
-
-        $this->inputMock->expects($this->any())->method('getArgument')->will($this->returnCallback(function () {
-            switch (func_get_arg(0)) {
-                case 'publishPath':
-                    return TEST_PATH;
-                case 'package':
-                    return uniqid();
-            }
-        }));
-
-        $this->inputMock->expects($this->any())->method('getOption')->will($this->returnValue(TEST_PATH));
-
-
-        try {
-            $model = new PublishModel($this->inputMock);
-            $model->validate();
-        } catch (\Exception $exception) {
-            $this->assertTrue($exception instanceof \InvalidArgumentException);
-        }
-    }
-
-    public function testValid()
-    {
-        $this->inputMock->expects($this->any())->method('getArgument')->will($this->returnCallback(function () {
-            switch (func_get_arg(0)) {
-                case 'publishPath':
-                    return TEST_PATH;
-                case 'package':
-                    return 'vendor/package';
-            }
-        }));
-
-        $this->inputMock->expects($this->any())->method('getOption')->will($this->returnValue(TEST_PATH));
-
+        $this->prepareInput();
         $model = new PublishModel($this->inputMock);
-        $model->validate();
+
+        $this->assertSame('*', $model->getPackageEntry());
+        $this->assertSame('*', $model->getGroupEntry());
+        $this->assertSame(getcwd(), $model->getConfigPath());
+        $this->assertSame(getcwd(), $model->getPublishPath());
     }
 
     /**

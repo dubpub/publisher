@@ -1,5 +1,10 @@
 <?php namespace Dubpub\Publisher\Filters;
 
+use Dubpub\Publisher\Exceptions\InvalidConfigPathOptionException;
+use Dubpub\Publisher\Exceptions\InvalidGroupArgumentException;
+use Dubpub\Publisher\Exceptions\InvalidPackageArgumentException;
+use Dubpub\Publisher\Exceptions\InvalidPublishPathOptionException;
+use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputInterface;
 
 class PublishFilter
@@ -12,6 +17,38 @@ class PublishFilter
     public function __construct(InputInterface $input)
     {
         $this->input = $input;
+    }
+
+    protected function throwArgumentException($param, $value)
+    {
+        $message = "Invalid {$param}. Given: \"{$value}\".";
+
+        switch ($param) {
+            case 'package':
+                $exception = new InvalidPackageArgumentException($message);
+                break;
+            case 'group':
+                $exception = new InvalidGroupArgumentException($message);
+                break;
+        }
+
+        throw $exception;
+    }
+
+    protected function throwOptionException($param, $value)
+    {
+        $message = "Invalid {$param}. Given: \"{$value}\".";
+
+        switch ($param) {
+            case 'publishPath':
+                $exception = new InvalidPublishPathOptionException($message);
+                break;
+            case 'configPath':
+                $exception = new InvalidConfigPathOptionException($message);
+                break;
+        }
+
+        throw $exception;
     }
 
     /**
@@ -30,7 +67,7 @@ class PublishFilter
 
             // checking if it's at least one entry
             if (!preg_match($regExpAny, $value)) {
-                throw new \InvalidArgumentException('Invalid ' . $paramName . ' format: ' . $value);
+                return $this->throwArgumentException($paramName, $value);
             }
 
             // imploding entries names
@@ -38,7 +75,7 @@ class PublishFilter
 
             foreach ($entryNames as $entryName) {
                 if (!preg_match($regExpOne, $entryName)) {
-                    throw new \InvalidArgumentException('Invalid '. $paramName . ' format: ' . $entryName);
+                    return $this->throwArgumentException($paramName, $value);
                 }
             }
 
@@ -49,10 +86,10 @@ class PublishFilter
 
     private function checkPath($optionName, $message)
     {
-        $path = realpath($this->input->getOption($optionName));
+        $path = realpath($realValue = $this->input->getOption($optionName));
 
         if (!$path) {
-            throw new \InvalidArgumentException($message);
+            return $this->throwOptionException($optionName, $realValue);
         }
 
         $this->input->setOption($optionName, $path);

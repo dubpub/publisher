@@ -1,6 +1,6 @@
 <?php namespace Dubpub\Publisher\Commands;
 
-use Dubpub\Publisher\Contracts\IPublisherHandler;
+use Dubpub\Publisher\Abstraction\Contracts\IPublisherHandler;
 use Dubpub\Publisher\Filters\PublishFilter;
 use Dubpub\Publisher\Models\PublishModel;
 use Dubpub\Publisher\PublisherScanner;

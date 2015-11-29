@@ -2,6 +2,9 @@
 vendor/
 composer.lock
 
+publisher.*
+!publisher
+
 !tests/tests/vendor
 
 ## phpunit

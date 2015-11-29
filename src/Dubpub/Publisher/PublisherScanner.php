@@ -1,7 +1,7 @@
 <?php namespace Dubpub\Publisher;
 
-use Dubpub\Publisher\Contracts\IPublisherHandler;
-use Dubpub\Publisher\Handlers\AHandler;
+use Dubpub\Publisher\Abstraction\Contracts\IPublisherHandler;
+use Dubpub\Publisher\Abstraction\Abstracts\APublisherHandler;
 use Exception;
 
 class PublisherScanner
@@ -32,7 +32,7 @@ class PublisherScanner
 
     /**
      * @param $type
-     * @return IPublisherHandler|AHandler
+     * @return IPublisherHandler|APublisherHandler
      */
     protected function makeType($type)
     {

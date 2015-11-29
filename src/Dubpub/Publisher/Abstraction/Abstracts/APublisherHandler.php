@@ -1,14 +1,8 @@
-<?php
-namespace Dubpub\Publisher\Handlers;
-use Dubpub\Publisher\Contracts\IPublisherHandler;
+<?php namespace Dubpub\Publisher\Abstraction\Abstracts;
 
-/**
- * Created by PhpStorm.
- * User: madman
- * Date: 11.11.15
- * Time: 23:22
- */
-abstract class AHandler implements IPublisherHandler
+use Dubpub\Publisher\Abstraction\Contracts\IPublisherHandler;
+
+abstract class APublisherHandler implements IPublisherHandler
 {
     /**
      * @var string
@@ -52,13 +46,15 @@ abstract class AHandler implements IPublisherHandler
 
         $composerPath = $this->path . DIRECTORY_SEPARATOR . 'composer.json';
 
-        /*if (!$this->path) {
+        /*
+        if (!$this->path) {
             throw new \Exception('Path does not exist: '. $path);
         }
 
         if (!file_exists($composerPath)) {
             throw new \LogicException('Publisher file must be located same folder, as composer.json. Path: ' . $path);
-        }*/
+        }
+        */
 
         $this->composerName = json_decode(file_get_contents($composerPath))->name;
 
@@ -142,16 +138,6 @@ abstract class AHandler implements IPublisherHandler
     public function getGroupsByPackageName($packageName)
     {
         return $this->data[$packageName];
-    }
-
-    /**
-     * @param string $packageName
-     * @param string $groupName
-     * @return bool
-     */
-    public function packageHasGroup($packageName, $groupName)
-    {
-        return $this->packageExists($packageName) && array_key_exists($groupName, $this->data[$packageName]);
     }
 
     /**

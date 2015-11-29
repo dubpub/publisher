@@ -14,6 +14,7 @@ abstract class HelperTest extends \PHPUnit_Framework_TestCase
 {
     protected $expectation = [
         "demo-publisher/demo-package" => [
+
         ],
         "dubpub/publisher" => [
             "assets" => [
@@ -58,6 +59,10 @@ abstract class HelperTest extends \PHPUnit_Framework_TestCase
         $this->prepareFolder();
 
         $this->inputMock = $this->getMock(InputInterface::class);
+
+        $this->inputMock->expects($this->any())->method('isInteractive')
+            ->will($this->returnValue(true));
+
         $this->outputMock = $this->getMock(OutputInterface::class);
 
         $this->publisherScanner = new PublisherScanner();
