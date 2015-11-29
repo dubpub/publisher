@@ -40,7 +40,7 @@ class PublishCommand extends Command
     }
 
 
-    protected function interact(InputInterface $input)
+    protected function interact(InputInterface $input, OutputInterface $output)
     {
         $filter = new PublishFilter($input);
 

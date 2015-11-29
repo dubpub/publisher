@@ -42,7 +42,7 @@ class InitCommand extends Command
         );
     }
 
-    protected function execute(InputInterface $input)
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
         $path = $input->getArgument('initPath');
 
