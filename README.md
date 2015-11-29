@@ -1,6 +1,6 @@
 #.publisher
 
-> Package for publishing or linking files from composer's vendor dependencies.
+> Package for publishing or linking files from composer's dependencies.
 
 - <a href="#install">Install</a>
 - <a href="#schemas-and-syntax">Supported schemas and syntax</a>
