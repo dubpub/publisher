@@ -2,6 +2,8 @@
 vendor/
 composer.lock
 
+!tests/tests/vendor
+
 ## phpunit
 doc/
 tests/tests/php/configs/
