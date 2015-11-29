@@ -14,7 +14,7 @@ class InitCommand extends Command
      */
     private $publisherScanner;
 
-    public function __construct($name = null, PublisherScanner $publisherScanner)
+    public function __construct($name = null, PublisherScanner $publisherScanner = null)
     {
         $this->publisherScanner = $publisherScanner;
         parent::__construct($name);
@@ -42,7 +42,7 @@ class InitCommand extends Command
         );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input)
     {
         $path = $input->getArgument('initPath');
 

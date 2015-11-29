@@ -21,10 +21,10 @@ class PHPHandler extends APublisherHandler implements IPublisherHandler
      */
     public function writeData($filePath, array $data)
     {
-        return file_put_contents($filePath, '<?php return ' . $this->var_export_braces($data) . ';');
+        return file_put_contents($filePath, '<?php return ' . $this->varExportBraces($data) . ';');
     }
 
-    public function var_export_braces($var, $indent = null)
+    public function varExportBraces($var, $indent = null)
     {
         if ($indent === null) {
             $indent = "";
@@ -38,14 +38,14 @@ class PHPHandler extends APublisherHandler implements IPublisherHandler
                 break;
             case "array":
                 $indexed = array_keys($var) === range(0, count($var) - 1);
-                $r = [];
+                $sub = [];
                 foreach ($var as $key => $value) {
-                    $r[] = $indent . "    "
-                        . ($indexed ? "" : $this->var_export_braces($key) . " => ")
-                        . $this->var_export_braces($value, $indent . "    ");
+                    $sub[] = $indent . "    "
+                        . ($indexed ? "" : $this->varExportBraces($key) . " => ")
+                        . $this->varExportBraces($value, $indent . "    ");
                 }
 
-                $result .= "[\n" . implode(",\n", $r) . "\n" . $indent . "]";
+                $result .= "[\n" . implode(",\n", $sub) . "\n" . $indent . "]";
                 break;
         }
 

@@ -84,7 +84,7 @@ class PublishFilter
         }
     }
 
-    private function checkPath($optionName, $message)
+    private function checkPath($optionName)
     {
         $path = realpath($realValue = $this->input->getOption($optionName));
 
@@ -93,12 +93,14 @@ class PublishFilter
         }
 
         $this->input->setOption($optionName, $path);
+
+        return null;
     }
 
     private function processOptions()
     {
-        $this->checkPath('configPath', 'Unable to locate .publisher path.');
-        $this->checkPath('publishPath', 'Unable to locate publish path.');
+        $this->checkPath('configPath');
+        $this->checkPath('publishPath');
     }
 
     private function processPackageParam()

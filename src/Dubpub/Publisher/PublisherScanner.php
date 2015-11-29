@@ -81,7 +81,7 @@ class PublisherScanner
 
         foreach ($files = glob($this->path . '/vendor/**/*') as $packageFolder) {
 
-            $files = glob($glob = $packageFolder . '/.publisher.{'.$extensions.'}', GLOB_BRACE);
+            $files = glob($packageFolder . '/.publisher.{'.$extensions.'}', GLOB_BRACE);
 
             if ($files && count($files)) {
 

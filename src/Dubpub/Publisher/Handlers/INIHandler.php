@@ -17,7 +17,8 @@ class INIHandler extends APublisherHandler implements IPublisherHandler
         return file_put_contents($filePath, $this->valueToIni($data)) !== false;
     }
 
-    protected function valueToIni(array $data) {
+    protected function valueToIni(array $data)
+    {
         $result = "";
 
         foreach ($data as $section => $values) {
