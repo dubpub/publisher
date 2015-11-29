@@ -97,7 +97,7 @@ class InitCommandTest extends \HelperTest
                 case 'initPath':
                     return TEST_PATH;
                 case 'publisherType':
-                    return 'ini';
+                    return 'xml';
             }
         }));
 

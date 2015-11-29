@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 
+use Dubpub\Publisher\Handlers\INIHandler;
 use Dubpub\Publisher\Handlers\JSONHandler;
 use Dubpub\Publisher\Handlers\PHPHandler;
 use Dubpub\Publisher\Handlers\YAMLHandler;
@@ -121,6 +122,7 @@ class DemoCommand extends \Symfony\Component\Console\Command\Command
 
 $scanner->registerTypeHandler('php', PHPHandler::class);
 $scanner->registerTypeHandler('json', JSONHandler::class);
+$scanner->registerTypeHandler('ini', INIHandler::class);
 $scanner->registerTypeHandler('yaml', $yaml = new YAMLHandler(new Parser(), new Dumper()));
 $scanner->registerTypeHandler('yml', $yaml);
 

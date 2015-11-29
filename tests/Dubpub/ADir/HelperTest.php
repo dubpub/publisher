@@ -26,6 +26,8 @@ abstract class HelperTest extends \PHPUnit_Framework_TestCase
             ],
             "link" => [
                 "@link/* -> link"
+            ],
+            'empty' => [
             ]
         ]
     ];
@@ -69,6 +71,7 @@ abstract class HelperTest extends \PHPUnit_Framework_TestCase
 
         $this->publisherScanner->registerTypeHandler('php', \Dubpub\Publisher\Handlers\PHPHandler::class);
         $this->publisherScanner->registerTypeHandler('json', \Dubpub\Publisher\Handlers\JSONHandler::class);
+        $this->publisherScanner->registerTypeHandler('ini', \Dubpub\Publisher\Handlers\INIHandler::class);
 
         $yamlHandler = new \Dubpub\Publisher\Handlers\YAMLHandler(
             new \Symfony\Component\Yaml\Parser(),

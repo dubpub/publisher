@@ -25,8 +25,14 @@ class PublishCommandTest extends \HelperTest
         return new PublishCommand('publish', $publisherScanner, new Filesystem());
     }
 
-    protected function initiate($type)
+    protected function initiate($type, $exceptEmpty = true)
     {
+        $expected = $this->expectation;
+
+        if (!$exceptEmpty) {
+            unset($expected['dubpub/publisher']['empty']);
+        }
+
         $command = new InitCommand('init', $this->publisherScanner);
 
         $inputMock = $this->getMock(InputInterface::class);
@@ -43,7 +49,7 @@ class PublishCommandTest extends \HelperTest
         $command->run($inputMock, $this->outputMock);
 
         $this->assertSame(
-            $this->expectation,
+            $expected,
             $this->publisherScanner->scan()->getData()
         );
     }
@@ -95,6 +101,15 @@ class PublishCommandTest extends \HelperTest
     public function testYAML()
     {
         $this->initiate('yaml');
+
+        $this->prepareInput();
+
+        $this->testInstance->run($this->inputMock, $this->outputMock);
+    }
+
+    public function testINI()
+    {
+        $this->initiate('ini', false);
 
         $this->prepareInput();
 
