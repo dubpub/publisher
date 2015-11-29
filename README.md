@@ -2,10 +2,15 @@
 
 > Package for publishing or linking files from composer's vendor dependencies.
 
-- <a href="install">Install</a>
-- <a href="schemas_and_syntax">Supported schemas and syntax</a>
-- <a href="usage_package">Usage in package</a>
-- <a href="usage_project">Usage in project</a>
+- <a href="#install">Install</a>
+- <a href="#schemas-and-syntax">Supported schemas and syntax</a>
+    - <a href="#php-example">PHP example</a>
+    - <a href="#json-example">JSON example</a>
+    - <a href="#ini-example">INI example</a>
+    - <a href="#ymlyaml-example">YML,YAML example</a>
+- <a href="#usage-in-package">Usage in package</a>
+- <a href="#usage-in-project">Usage in project</a>
+- <a href="#extending">Extending format support</a>
 
 ##Install
 
@@ -96,7 +101,7 @@ File notation examples:
     </tbody>
 </table>
 
-####PHP example:
+####PHP example
 ```php
 <?php // .publisher.php
 return [
@@ -110,7 +115,7 @@ return [
     ]
 ];
 ```
-####JSON example:
+####JSON example
 ```json
 {
   "myvendor/mypackage": {
@@ -123,9 +128,13 @@ return [
   }
 }
 ```
-####YML,YAML example:
-yml, yaml:
-
+####INI example
+```ini
+[myvendor/mypackage]
+assets[] = "assets/css/* -> {public/web}/assets/styles"
+bin[] = "@bin/executableFile -> bin/"
+```
+####YML,YAML example
 ```yml
 myvendor/mypackage:
     assets:
@@ -135,13 +144,11 @@ myvendor/mypackage:
 ```
 
 ##Usage in package
-Simply initiate .publisher file an fill it with contents you need, according to examples above and place it into folder 
-where your project's `composer.json` is located. Note, that .publisher will not work if `composer.json` file or 
-`vendor/` folder don't exists.
+Simply initiate .publisher file an fill it with contents you need, according to examples above and place it into folder where your project's **composer.json** is located. 
+Note, that .publisher will not work if **composer.json** file or **vendor/** folder don't exists.
 
 ##Usage in project
-After installing .publisher into your project you need to generate .publisher file or create it manually. Use `init` 
-command to generate .publisher file:
+After installing .publisher into your project you need to generate .publisher file or create it manually. Use **init** command to generate .publisher file:
 
 ```bash
 $MyProject> vendor/bin/publisher init
