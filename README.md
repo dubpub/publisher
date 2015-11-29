@@ -170,7 +170,17 @@ or:
 $> vendor/bin/publisher publish "*"
 ```
 
-For publishing specific vendor:
+For publishing specific package:
 ```bash
 $> vendor/bin/publisher publish acmevendor/acmepackage
+```
+
+For publishing specific package's group:
+```bash
+$> vendor/bin/publisher publish acmevendor/acmepackage assets
+```
+
+For publishing specific packages' groups:
+```bash
+$> vendor/bin/publisher publish acmevendor/acmepackage,acmevendor1/acmepackage1 assets,configs
 ```
