@@ -2,6 +2,13 @@
 
 > Package for publishing or linking files from composer's dependencies.
 
+[![Latest Stable Version](https://poser.pugx.org/dubpub/publisher/v/stable)](https://packagist.org/packages/dubpub/publisher)
+[![Total Downloads](https://poser.pugx.org/dubpub/publisher/downloads)](https://packagist.org/packages/dubpub/publisher)
+[![Latest Unstable Version](https://poser.pugx.org/dubpub/publisher/v/unstable)](https://packagist.org/packages/dubpub/publisher)
+[![Build Status](https://travis-ci.org/dubpub/publisher.svg?branch=master)](https://travis-ci.org/dubpub/publisher)
+[![Coverage Status](https://coveralls.io/repos/dubpub/publisher/badge.svg?branch=master&service=github)](https://coveralls.io/github/dubpub/publisher?branch=master)
+[![Code Climate](https://codeclimate.com/github/dubpub/publisher/badges/gpa.svg)](https://codeclimate.com/github/dubpub/publisher)
+
 - <a href="#install">Install</a>
 - <a href="#schemas-and-syntax">Supported schemas and syntax</a>
     - <a href="#php-example">PHP example</a>
