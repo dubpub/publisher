@@ -9,7 +9,13 @@ use Dubpub\Publisher\Handlers\YAMLHandler;
 use Symfony\Component\Yaml\Dumper;
 use Symfony\Component\Yaml\Parser;
 
-include  __DIR__. '/vendor/autoload.php';
+if (file_exists(__DIR__. '/vendor/autoload.php')) {
+    include  __DIR__. '/vendor/autoload.php';
+}
+
+if (file_exists(__DIR__. '/../autoload.php')) {
+    include  __DIR__. '/../autoload.php';
+}
 
 $scanner = new \Dubpub\Publisher\PublisherScanner();
 
