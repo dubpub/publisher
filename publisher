@@ -9,12 +9,17 @@ use Dubpub\Publisher\Handlers\YAMLHandler;
 use Symfony\Component\Yaml\Dumper;
 use Symfony\Component\Yaml\Parser;
 
-if (file_exists(__DIR__. '/vendor/autoload.php')) {
-    include  __DIR__. '/vendor/autoload.php';
+$success = false;
+
+foreach (['/vendor/autoload.php', '/../autoload.php', '/../../autoload.php'] as $path) {
+    if (file_exists($loaderFilename = __DIR__ . $path)) {
+        include $loaderFilename;
+        $success = true;
+    }
 }
 
-if (file_exists(__DIR__. '/../autoload.php')) {
-    include  __DIR__. '/../autoload.php';
+if (!$success) {
+    die('Unable to locate autoloader\n');
 }
 
 $scanner = new \Dubpub\Publisher\PublisherScanner();
